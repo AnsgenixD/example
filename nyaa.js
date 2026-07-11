@@ -1,13 +1,3 @@
-// ==MiruExtension==
-// @name         Nyaa Torrent Search
-// @version      v1.0.1
-// @author       Custom
-// @lang         en
-// @package      nyaa.torrent.search
-// @type         torrent
-// @webSite      https://torrent-search-api-livid.vercel.app
-// ==MiruExtension==
-
 export default class Nyaa {
   base = 'https://torrent-search-api-livid.vercel.app/api/'
 
@@ -25,9 +15,6 @@ export default class Nyaa {
 
     const cleanQuery = encodeURIComponent(query)
     const targetUrl = `${this.base}nyaasi/${cleanQuery}`
-    
-    // We explicitly call standard fetch wrapped through the allorigins public proxy 
-    // to bypass the browser's native CORS lock on hayase.app
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
 
     try {
