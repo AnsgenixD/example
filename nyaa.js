@@ -1,6 +1,5 @@
 const base = 'https://torrent-search-api-livid.vercel.app/api/';
 
-// Isolated search function so it NEVER loses 'this' scope when Hayase calls it
 async function performSearch(title, episode) {
   if (!title || typeof title !== 'string') return [];
   
@@ -10,11 +9,11 @@ async function performSearch(title, episode) {
   }
 
   const targetUrl = `${base}nyaasi/${encodeURIComponent(query)}`;
-  // Proxy wrapper to bypass browser CORS on web players
   const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
   try {
-    const response = await window.fetch(proxyUrl);
+    // Standard fetch() works perfectly inside Web Workers
+    const response = await fetch(proxyUrl);
     if (!response.ok) return [];
 
     const textData = await response.text();
@@ -42,10 +41,8 @@ async function performSearch(title, episode) {
   }
 }
 
-// Exporting a plain object (Hayase's 'n.mod') with explicitly declared functions
 export default {
   async single(payload) {
-    // Safely extract the title whether Hayase passes { titles: ["..."] } or a raw string
     const title = payload?.titles?.[0] || payload?.title || (typeof payload === 'string' ? payload : '');
     return performSearch(title, payload?.episode);
   },
@@ -63,7 +60,7 @@ export default {
   async test() {
     try {
       const testUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(base + 'nyaasi/one%20piece')}`;
-      const res = await window.fetch(testUrl);
+      const res = await fetch(testUrl);
       return res.ok;
     } catch {
       return false;
