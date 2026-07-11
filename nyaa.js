@@ -1,31 +1,12 @@
 export default class Nyaa {
   base = 'https://torrent-search-api-livid.vercel.app/api/'
 
-  async single({ titles, episode }) {
-    if (!titles?.length) return []
-    return this.search(titles[0], episode)
-  }
-
-  // Handle batch requests safely (passing null for episode context)
-  async batch({ titles }) {
-    if (!titles?.length) return []
-    return this.search(titles[0], null)
-  }
-
-  // Handle movie requests safely
-  async movie({ titles }) {
-    if (!titles?.length) return []
-    return this.search(titles[0], null)
-  }
-
-  async search(title, episode) {
-    // 1. Clean the search query string
-    let query = title.replace(/[^\w\s-]/g, ' ').trim()
+  // Overriding standard search hooks natively as methods
+  async search(kw, page, filter) {
+    if (!kw) return []
     
-    // 2. Safe check: only append and format episode if it's explicitly provided
-    if (episode !== undefined && episode !== null) {
-      query += ` ${episode.toString().padStart(2, '0')}`
-    }
+    // Clean the search query string
+    let query = kw.replace(/[^\w\s-]/g, ' ').trim()
 
     const cleanQuery = encodeURIComponent(query)
     const targetUrl = `${this.base}nyaasi/${cleanQuery}`
@@ -60,13 +41,16 @@ export default class Nyaa {
     }
   }
 
-  async test() {
-    try {
-      const testUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(this.base + 'nyaasi/one%20piece')}`
-      const res = await window.fetch(testUrl)
-      return res.ok
-    } catch {
-      return false
-    }
+  // Map individual, batch, and movie requests directly into the core search method
+  async single(kw) {
+    return this.search(kw)
+  }
+
+  async batch(kw) {
+    return this.search(kw)
+  }
+
+  async movie(kw) {
+    return this.search(kw)
   }
 }
