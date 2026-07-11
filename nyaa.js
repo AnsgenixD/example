@@ -6,12 +6,26 @@ export default class Nyaa {
     return this.search(titles[0], episode)
   }
 
-  batch = async (args) => this.single(args)
-  movie = async (args) => this.single(args)
+  // Handle batch requests safely (passing null for episode context)
+  async batch({ titles }) {
+    if (!titles?.length) return []
+    return this.search(titles[0], null)
+  }
+
+  // Handle movie requests safely
+  async movie({ titles }) {
+    if (!titles?.length) return []
+    return this.search(titles[0], null)
+  }
 
   async search(title, episode) {
+    // 1. Clean the search query string
     let query = title.replace(/[^\w\s-]/g, ' ').trim()
-    if (episode) query += ` ${episode.toString().padStart(2, '0')}`
+    
+    // 2. Safe check: only append and format episode if it's explicitly provided
+    if (episode !== undefined && episode !== null) {
+      query += ` ${episode.toString().padStart(2, '0')}`
+    }
 
     const cleanQuery = encodeURIComponent(query)
     const targetUrl = `${this.base}nyaasi/${cleanQuery}`
