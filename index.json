@@ -1,12 +1,17 @@
 [
   {
-    "name": "Nyaa Torrent Search",
     "id": "ansgenix.extension.nyaa",
+    "name": "Nyaa Torrent Search",
     "version": "1.0.1",
     "type": "torrent",
     "accuracy": "medium",
-    "media": "both",
-    "languages": ["all"],
+    "ratio": 0,
+    "media": "sub",
+    "languages": [
+      "all"
+    ],
+    "nsfw": false,
+    "icon": "https://nyaa.si/static/favicon.png",
     "update": "https://raw.githubusercontent.com/AnsgenixD/example/main/index.json",
     "code": "https://raw.githubusercontent.com/AnsgenixD/example/main/nyaa.js"
   }
