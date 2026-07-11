@@ -1,0 +1,92 @@
+export default class Nyaa {
+  // Use the clean Vercel target API endpoint
+  targetApi = 'https://torrent-search-api-livid.vercel.app/api/'
+
+  async single({ titles, episode }) {
+    if (!titles?.length) return []
+    return this.search(titles[0], episode)
+  }
+
+  batch = async (args) => this.single(args)
+  movie = async (args) => this.single(args)
+
+  async search(title, episode) {
+    let query = title.replace(/[^\w\s-]/g, ' ').trim()
+    if (episode) query += ` ${episode.toString().padStart(2, '0')}`
+
+    const cleanQuery = encodeURIComponent(query)
+    
+    // We try Nyaasi first. If you specifically want Sukebei, swap 'nyaasi/' to 'sukebei/'
+    const targetUrl = `${this.targetApi}nyaasi/${cleanQuery}`
+    
+    // Bypasses browser CORS policy completely by leveraging a reliable JSONP/CORS wrapper proxy
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+
+    console.log(`[Nyaa Ext] 🚀 Initializing search query for: "${query}"`)
+    console.log(`[Nyaa Ext] 🔗 Proxy Destination: ${proxyUrl}`)
+
+    try {
+      // Using native window.fetch but routing via the proxy to strip headers
+      const response = await window.fetch(proxyUrl)
+      
+      console.log(`[Nyaa Ext] 📡 Network status received: ${response.status} (${response.statusText})`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP network error! Status Code: ${response.status}`)
+      }
+
+      const textData = await response.text()
+      if (!textData || textData.trim() === "") {
+        throw new Error("Received an entirely empty text response from the server.")
+      }
+
+      let data;
+      try {
+        data = JSON.parse(textData)
+      } catch (jsonErr) {
+        throw new Error(`Failed to parse response body as JSON. Raw text snippet: "${textData.substring(0, 150)}..."`)
+      }
+
+      if (!Array.isArray(data)) {
+        console.warn('[Nyaa Ext] ⚠️ Response structure parsed successfully but is not an array:', data)
+        return []
+      }
+
+      console.log(`[Nyaa Ext] ✅ Success! Received and verified ${data.length} torrent results.`)
+
+      return data.map(item => ({
+        title: item.Name || 'Unknown Title',
+        link: item.Magnet || '',
+        hash: item.Magnet?.match(/btih:([A-Fa-f0-9]+)/)?.[1]?.toLowerCase() || '',
+        seeders: Number(item.Seeders || 0),
+        leechers: Number(item.Leechers || 0),
+        downloads: Number(item.Downloads || 0),
+        size: 0,
+        date: item.DateUploaded ? new Date(item.DateUploaded) : new Date(),
+        accuracy: 'medium',
+        type: 'alt'
+      }))
+
+    } catch (error) {
+      // Comprehensive error reporting framework to reveal exactly what broke
+      console.error(`[Nyaa Ext] ❌ CRITICAL FAILURE during extension execution!`, {
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        hint: "If the message contains 'Failed to fetch', the allorigins proxy is either rate-limiting or blocked by your browser network configs."
+      })
+      return []
+    }
+  }
+
+  async test() {
+    try {
+      const testUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(this.targetApi + 'nyaasi/one%20piece')}`
+      const res = await window.fetch(testUrl)
+      return res.ok
+    } catch (err) {
+      console.error('[Nyaa Ext] ❌ Test connection routine failed:', err)
+      return false
+    }
+  }
+}
